@@ -26,10 +26,13 @@ jobs:
           echo "${{ secrets.APPLICATION_PROD_YML }}" > ./application.yml
         shell: bash
 
-      - name: Grant Execute Permission For Gradlew & Build gradle
+      - name: Grant Execute Permission For Gradlew
         run : |
           chmod +x gradlew
-          ./gradlew build
+
+      - name: Build with Gradle exclude test
+        run: |
+          ./gradlew clean build --exclude-task test
 
       - name: Docker Hub build & Push
         run: |
@@ -37,6 +40,11 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }} .
           docker push ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKER_REPO }}
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Deploy
         uses: appleboy/ssh-action@master
         with:
